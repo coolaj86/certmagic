@@ -144,7 +144,7 @@ func (am *ACMEManager) newACMEClient(ctx context.Context, useTestCA, interactive
 	// in situations where the default challenges would fail)
 	if am.DNS01Solver == nil {
 		// enable HTTP-01 challenge
-		if !am.DisableHTTPChallenge {
+		if !am.DisableHTTPChallenge && am.HTTP01Solver == nil {
 			useHTTPPort := HTTPChallengePort
 			if HTTPPort > 0 && HTTPPort != HTTPChallengePort {
 				useHTTPPort = HTTPPort
@@ -152,7 +152,7 @@ func (am *ACMEManager) newACMEClient(ctx context.Context, useTestCA, interactive
 			if am.AltHTTPPort > 0 {
 				useHTTPPort = am.AltHTTPPort
 			}
-			client.ChallengeSolvers[acme.ChallengeTypeHTTP01] = distributedSolver{
+			am.HTTP01Solver = distributedSolver{
 				acmeManager: am,
 				solver: &httpSolver{
 					acmeManager: am,
@@ -161,6 +161,7 @@ func (am *ACMEManager) newACMEClient(ctx context.Context, useTestCA, interactive
 				caURL: client.Directory,
 			}
 		}
+		client.ChallengeSolvers[acme.ChallengeTypeHTTP01] = am.HTTP01Solver
 
 		// enable TLS-ALPN-01 challenge
 		if !am.DisableTLSALPNChallenge {
